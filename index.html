@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Plan Hígado">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#1f6f5c">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="apple-touch-icon.png">
+<title>Plan Hígado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+[hidden]{display:none!important}
+img{max-width:100%}
+/* Layout: one narrow column, phone-first; the week grid is the core, summary pills above, history + plan below */
+:root{
+  --bg:#f3f6f4; --surface:#ffffff; --line:#d9e2dd; --fg:#16211d; --muted:#5b6b64;
+  --accent:#1f6f5c; --accent-soft:#e1efe9; --amber:#a86b12; --amber-soft:#fbefd9;
+  --good:#1f7a4a; --good-soft:#e2f3e8; --warn:#9a6400; --warn-soft:#fbf0d6; --bad:#b03a2e; --bad-soft:#f9e3e0;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1513; --surface:#17201d; --line:#2a3632; --fg:#e6eeea; --muted:#9aaba4;
+  --accent:#5cc3a6; --accent-soft:#1c3a32; --amber:#e3ab52; --amber-soft:#3a2c14;
+  --good:#6fd39a; --good-soft:#163526; --warn:#e6b85a; --warn-soft:#3a2f14; --bad:#f08a7e; --bad-soft:#3d1d1a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1513; --surface:#17201d; --line:#2a3632; --fg:#e6eeea; --muted:#9aaba4;
+  --accent:#5cc3a6; --accent-soft:#1c3a32; --amber:#e3ab52; --amber-soft:#3a2c14;
+  --good:#6fd39a; --good-soft:#163526; --warn:#e6b85a; --warn-soft:#3a2f14; --bad:#f08a7e; --bad-soft:#3d1d1a; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
+.wrap{max-width:640px;margin:0 auto;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:20px 48px;display:flex;flex-direction:column;gap:22px}
+h1,h2{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:28px;line-height:1.1}
+h2{font-size:18px}
+.sub{color:var(--muted);margin:4px 0 0;font-size:14px}
+.status{font-size:12.5px;color:var(--muted)}
+.label{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.nav button{border:1px solid var(--line);background:var(--surface);border-radius:10px;width:42px;height:42px;font-size:18px}
+.nav .mid{text-align:center;min-width:0}
+.nav .wk{font-family:var(--display);font-size:20px;font-weight:700}
+.nav .dates{color:var(--muted);font-size:13px}
+.today-btn{border:none;background:none;color:var(--accent);font-size:13px;font-weight:700;padding:2px 6px}
+.pills{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (min-width:520px){.pills{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.pill{border-radius:12px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.pill .v{font-family:var(--display);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.pill .k{font-size:12.5px;color:var(--muted)}
+.pill.good{background:var(--good-soft);border-color:transparent}.pill.good .v{color:var(--good)}
+.pill.warn{background:var(--warn-soft);border-color:transparent}.pill.warn .v{color:var(--warn)}
+.pill.bad{background:var(--bad-soft);border-color:transparent}.pill.bad .v{color:var(--bad)}
+.days{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden}
+.day{display:grid;grid-template-columns:64px 1fr auto;gap:8px 10px;align-items:center;padding:10px 12px;border-top:1px solid var(--line)}
+.day:first-child{border-top:none}
+.day.is-today{background:var(--accent-soft)}
+.dname{font-weight:700}.ddate{font-size:12px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:5px 10px;font-size:13px;line-height:1.2}
+.chip[aria-pressed="true"].walk,.chip[aria-pressed="true"].gym,.chip[aria-pressed="true"].ate{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.chip[aria-pressed="true"].dessert{background:var(--bad);border-color:var(--bad);color:var(--surface)}
+.beer{display:flex;align-items:center;gap:4px}
+.beer button{width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-size:17px;line-height:1}
+.beer .n{min-width:26px;text-align:center;font-family:var(--display);font-weight:700;font-size:18px;font-variant-numeric:tabular-nums}
+.beer .n.on{color:var(--amber)}
+.beer .n.over{color:var(--bad)}
+.beer-cap{font-size:11px;color:var(--muted);text-align:center;grid-column:3}
+@media (max-width:440px){.day{grid-template-columns:1fr auto}.chips{grid-column:1 / -1;order:3}.beer-cap{display:none}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field input,.field textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 10px;width:100%;box-sizing:border-box;font-variant-numeric:tabular-nums}
+.field textarea{min-height:64px;resize:vertical}
+.field.full{grid-column:1 / -1}
+.delta{font-size:12.5px;color:var(--muted);min-height:1em}
+.delta.down{color:var(--good)}.delta.up{color:var(--bad)}
+.track{height:10px;border-radius:99px;background:var(--line);overflow:hidden}
+.track i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .3s}
+@media (prefers-reduced-motion:reduce){.track i{transition:none}}
+.track-legend{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.todo{display:flex;flex-direction:column;gap:2px}
+.todo button{display:flex;gap:10px;align-items:flex-start;text-align:left;border:none;background:none;padding:8px 2px;border-radius:8px}
+.box{flex:none;width:20px;height:20px;border-radius:6px;border:2px solid var(--muted);margin-top:1px;display:grid;place-items:center;font-size:13px;color:var(--surface)}
+.todo button[aria-pressed="true"] .box{background:var(--accent);border-color:var(--accent)}
+.todo button[aria-pressed="true"] .t{text-decoration:line-through;color:var(--muted)}
+.todo .h{display:block;font-size:12.5px;color:var(--muted)}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:14px}
+th,td{text-align:right;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+td.ok{color:var(--good)}td.no{color:var(--bad)}
+.empty{color:var(--muted);font-size:14px}
+.plan{display:grid;gap:10px}
+.plan div{display:grid;grid-template-columns:110px 1fr;gap:10px;font-size:14px}
+.plan b{font-weight:700}
+.foot{font-size:12.5px;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}
+.tile .v{font-family:var(--display);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;display:block}
+.tile .k{font-size:12.5px;color:var(--muted)}
+.chart{position:relative;display:flex;flex-direction:column;gap:6px}
+.chart h3{font-family:var(--display);font-size:15px;margin:0}
+.chart svg{width:100%;height:auto;display:block;overflow:visible}
+.chart .ax{fill:var(--muted);font-size:19px;font-family:var(--body)}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .hit{fill:transparent;cursor:pointer}
+.chart .tip{position:absolute;pointer-events:none;background:var(--fg);color:var(--bg);font-size:12.5px;padding:6px 8px;border-radius:8px;white-space:nowrap;transform:translate(-50%,-110%);font-variant-numeric:tabular-nums}
+.fc{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}
+.fc > div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.fc .big{font-family:var(--display);font-size:26px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums;line-height:1.1}
+.fc .k{font-size:12.5px;color:var(--muted)}
+.ai{white-space:pre-wrap;font-size:14.5px;line-height:1.55}
+.ai:empty{display:none}
+.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+label.btn{display:inline-block;cursor:pointer}
+.btn.danger{border-color:var(--bad);color:var(--bad)}
+.confirm{background:var(--bad-soft);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.confirm p{margin:0;font-size:14px}
+.banner{background:var(--warn-soft);color:var(--fg);border-radius:10px;padding:10px 12px;font-size:14px;margin:10px 0 0}
+.btn{border:1px solid var(--accent);color:var(--accent);background:transparent;border-radius:10px;padding:9px 12px;font-weight:700;align-self:flex-start}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Plan Hígado</h1>
+    <p class="sub">Check list semanal · meta: bajar grasa hepática y llegar a 162–168 lb</p>
+    <p class="status" id="status"></p>
+    <p class="banner" id="bkBanner" hidden></p>
+  </header>
+
+  <section class="nav" aria-label="Semana">
+    <button id="prev" aria-label="Semana anterior">‹</button>
+    <div class="mid">
+      <div class="wk" id="wkTitle">Semana 1</div>
+      <div class="dates" id="wkDates"></div>
+      <button class="today-btn" id="goToday" hidden>Ir a esta semana</button>
+    </div>
+    <button id="next" aria-label="Semana siguiente">›</button>
+  </section>
+
+  <section class="pills" id="pills" aria-label="Resumen de la semana"></section>
+
+  <section aria-label="Días">
+    <div class="days" id="days"></div>
+  </section>
+
+  <section class="card" aria-labelledby="hFc">
+    <h2 id="hFc">Pronóstico de hoy</h2>
+    <div class="fc">
+      <div><span class="label">Deberías pesar hoy</span><span class="big" id="fcW">—</span><span class="k" id="fcR"></span></div>
+      <div><span class="label">Ritmo actual</span><span class="big" id="fcRate">—</span><span class="k" id="fcEta"></span></div>
+    </div>
+    <p class="foot" id="fcNote">Calculado con lo que marcas cada día: postres evitados, cervezas frente a las ~20 artesanales de antes, caminatas y pesas. Se ajusta cada vez que anotas tu peso real.</p>
+  </section>
+
+  <section class="card" aria-labelledby="hMed">
+    <h2 id="hMed">Mediciones de la semana</h2>
+    <div class="fields">
+      <label class="field"><span class="label">Peso (lb)</span><input id="weight" type="number" inputmode="decimal" step="0.1" min="80" max="400" placeholder="ej. 178.5"><span class="delta" id="wDelta"></span></label>
+      <label class="field"><span class="label">Cintura (cm)</span><input id="waist" type="number" inputmode="decimal" step="0.5" min="50" max="200" placeholder="a nivel del ombligo"><span class="delta" id="cDelta"></span></label>
+      <label class="field full"><span class="label">Notas</span><textarea id="note" placeholder="Cómo te sentiste, reuniones, antojos…"></textarea></label>
+    </div>
+    <div>
+      <div class="track" aria-hidden="true"><i id="bar" style="width:0%"></i></div>
+      <div class="track-legend"><span>Inicio 180 lb</span><span id="barMid"></span><span>Meta 165 lb</span></div>
+    </div>
+    <p class="foot">Pésate el lunes en ayunas, después de ir al baño (el pronóstico toma el lunes como día de la pesada).</p>
+  </section>
+
+  <section class="card" aria-labelledby="hStats">
+    <h2 id="hStats">Estadísticas</h2>
+    <div class="tiles" id="tiles"></div>
+    <div class="chart" id="cWeight"><h3>Peso por semana (lb)</h3><div class="plot"></div><div class="tip" hidden></div></div>
+    <div class="chart" id="cBeer"><h3>Cervezas por semana · la línea marca la meta</h3><div class="plot"></div><div class="tip" hidden></div></div>
+    <div class="chart" id="cWalk"><h3>Caminatas por semana · meta 3</h3><div class="plot"></div><div class="tip" hidden></div></div>
+  </section>
+
+  <section class="card" aria-labelledby="hBk">
+    <h2 id="hBk">Respaldo</h2>
+    <p class="foot">Tus datos se guardan en este teléfono. Haz un respaldo cada 1–2 semanas y guárdalo en Archivos, iCloud Drive, Notas o WhatsApp. Si cambias de teléfono o se borran los datos de Safari, lo recuperas con "Restaurar respaldo".</p>
+    <p class="status" id="bkInfo"></p>
+    <div class="row">
+      <button class="btn" id="bkSave">Guardar respaldo</button>
+      <button class="btn" id="bkCsv">Exportar a Excel (CSV)</button>
+      <label class="btn" for="bkFile">Restaurar respaldo</label>
+      <input id="bkFile" type="file" accept=".json,application/json" hidden>
+    </div>
+    <div class="confirm" id="bkConfirm" hidden>
+      <p id="bkConfirmText"></p>
+      <div class="row"><button class="btn danger" id="bkYes">Reemplazar mis datos</button><button class="btn" id="bkNo">Cancelar</button></div>
+    </div>
+    <p class="status" id="bkMsg" aria-live="polite"></p>
+  </section>
+
+  <section class="card" aria-labelledby="hTodo">
+    <h2 id="hTodo">Pendientes médicos</h2>
+    <div class="todo" id="todo"></div>
+  </section>
+
+  <section class="card" aria-labelledby="hHist">
+    <h2 id="hHist">Historial</h2>
+    <div class="tablewrap" id="hist"></div>
+  </section>
+
+  <section class="card" aria-labelledby="hPlan">
+    <h2 id="hPlan">Mi plan</h2>
+    <div class="plan">
+      <div><b>Cerveza</b><span>Soberana (3.47 %, 285 ml). Semanas 1–4: máx. 10. Semanas 5–8: máx. 8. Desde la 9: máx. 6. Nunca más de 4 por ocasión, en ~1.5–2 h, con agua entre cervezas.</span></div>
+      <div><b>Comida</b><span>Sin postres. Comer antes de tomar (proteína + vegetales). Sin alitas ni frituras de acompañamiento.</span></div>
+      <div><b>Ejercicio</b><span>5 km caminando en zona 2 (117–136 lpm), 3 veces por semana. Cuando estés listo: pesas 2 veces, con énfasis en piernas.</span></div>
+      <div><b>Ritmo</b><span>1–1.5 lb por semana. La primera semana puede bajar 2–4 lb (agua).</span></div>
+      <div><b>Por qué</b><span>Hígado graso leve sin fibrosis (elastografía 4.3 kPa, atenuación 0.63). ALT 45, ácido úrico 7.9. Es reversible.</span></div>
+    </div>
+    <p class="foot">Guía orientativa; confírmala con tu médico.</p>
+  </section>
+</div>
+
+<script>
+(function(){
+  const START = '2026-11-02';           // lunes de la semana 1
+  const START_LB = 180, GOAL_LB = 165;
+  const G_PER_BEER = 7.8, KCAL_PER_BEER = 75;
+  const DAYS = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  const TODOS = [
+    {id:'labs', t:'Laboratorios de control', h:'Semana 7–8. ALT, AST, GGT, ácido úrico, hemograma, hepatitis B y C, insulina. Sin alcohol ni ejercicio fuerte 72 h antes.'},
+    {id:'eos', t:'Consulta médica por eosinófilos altos', h:'14.5 % (~1,600/µL). Pedir heces x3 y serología Strongyloides / Toxocara.'},
+    {id:'alcohol', t:'Contarle al médico el consumo previo de alcohol', h:'~20 artesanales de 7 % por semana, en 4 días.'},
+    {id:'gym', t:'Empezar pesas 2 veces por semana', h:'Énfasis en piernas.'},
+    {id:'inbody', t:'Repetir InBody', h:'Cada 2–3 meses. Meta grasa visceral < 10.'},
+    {id:'us', t:'Ultrasonido de control', h:'En 6–12 meses, con IHR medido 3–5 veces en corteza renal.'}
+  ];
+
+  const $ = id => document.getElementById(id);
+  const pad = n => String(n).padStart(2,'0');
+  const keyOf = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  const parseKey = k => { const [y,m,d] = k.split('-').map(Number); return new Date(y,m-1,d); };
+  const mondayOf = d => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() - ((x.getDay()+6)%7)); return x; };
+  const addDays = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+  const weekNum = k => Math.round((parseKey(k) - parseKey(START)) / (7*864e5)) + 1;
+  const goalFor = n => n <= 4 ? 10 : n <= 8 ? 8 : 6;
+  const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const fmtD = d => d.getDate()+' '+MESES[d.getMonth()];
+
+  const todayKey = keyOf(mondayOf(new Date()));
+  let curKey = todayKey < START ? START : todayKey;
+  let weeks = {};          // key -> week data
+  let settings = {done:{}};
+  const dirty = new Set(); // doc ids with unsaved local edits
+
+  const blankWeek = () => ({days: DAYS.map(() => ({walk:false, gym:false, dessert:false, beers:0, ate:false})), weight:null, waist:null, note:''});
+  const getWeek = k => weeks[k] || (weeks[k] = blankWeek());
+
+  /* ---------- storage ---------- */
+  const LS = 'planHigado.v1';
+  function cacheLocal(){ try{ localStorage.setItem(LS, JSON.stringify({weeks, settings})); }catch(e){} }
+  try{ const c = JSON.parse(localStorage.getItem(LS) || 'null'); if(c){ weeks = c.weeks || {}; settings = c.settings || {done:{}}; } }catch(e){}
+
+  function save(){
+    try{ localStorage.setItem(LS, JSON.stringify({weeks, settings})); setStatus('Guardado en este teléfono.'); }
+    catch(e){ setStatus('No se pudo guardar. Revisa que Safari no esté en modo privado y haz un respaldo.'); }
+  }
+  function setStatus(t){ $('status').textContent = t; }
+  if(navigator.storage && navigator.storage.persist){ try{ navigator.storage.persist(); }catch(e){} }
+
+  /* ---------- stats ---------- */
+  function stats(w, n){
+    const beers = w.days.reduce((s,d) => s + (d.beers||0), 0);
+    const maxOcc = Math.max(0, ...w.days.map(d => d.beers||0));
+    const freeDays = w.days.filter(d => !(d.beers > 0)).length;
+    return {
+      beers, maxOcc, freeDays, goal: goalFor(n),
+      walks: w.days.filter(d => d.walk).length,
+      gym: w.days.filter(d => d.gym).length,
+      desserts: w.days.filter(d => d.dessert).length,
+      grams: Math.round(beers * G_PER_BEER), kcal: beers * KCAL_PER_BEER
+    };
+  }
+  function prevWith(k, field){
+    const ks = Object.keys(weeks).filter(x => x < k && weeks[x][field] != null && weeks[x][field] !== '').sort();
+    return ks.length ? Number(weeks[ks[ks.length-1]][field]) : null;
+  }
+
+  /* ---------- render ---------- */
+  function pill(v, k, cls){ return '<div class="pill '+(cls||'')+'"><span class="v">'+v+'</span><span class="k">'+k+'</span></div>'; }
+
+  function renderHeader(){
+    const n = weekNum(curKey), mon = parseKey(curKey);
+    $('wkTitle').textContent = n >= 1 ? 'Semana ' + n : 'Antes del plan';
+    $('wkDates').textContent = fmtD(mon) + ' – ' + fmtD(addDays(mon,6)) + ' · meta ' + goalFor(Math.max(1,n)) + ' cervezas';
+    $('goToday').hidden = curKey === todayKey;
+  }
+
+  function renderPills(){
+    const n = Math.max(1, weekNum(curKey)), s = stats(getWeek(curKey), n);
+    $('pills').innerHTML =
+      pill(s.walks + '/3', 'caminatas de 5 km', s.walks >= 3 ? 'good' : s.walks === 2 ? 'warn' : '') +
+      pill(s.beers + '/' + s.goal, 'cervezas · ' + s.grams + ' g alcohol', s.beers <= s.goal ? 'good' : s.beers <= s.goal + 2 ? 'warn' : 'bad') +
+      pill(s.maxOcc, 'máx. en una ocasión (≤4)', s.maxOcc <= 4 ? 'good' : s.maxOcc === 5 ? 'warn' : 'bad') +
+      pill(s.freeDays, 'días sin alcohol (≥4)', s.freeDays >= 4 ? 'good' : s.freeDays === 3 ? 'warn' : 'bad') +
+      pill(s.desserts, 'postres (meta 0)', s.desserts === 0 ? 'good' : s.desserts <= 1 ? 'warn' : 'bad') +
+      pill(s.gym, 'sesiones de pesas', s.gym >= 2 ? 'good' : '');
+  }
+
+  function renderDays(){
+    const w = getWeek(curKey), mon = parseKey(curKey), tk = keyOf(new Date());
+    $('days').innerHTML = w.days.map((d,i) => {
+      const date = addDays(mon,i), b = d.beers||0;
+      return '<div class="day'+(keyOf(date)===tk?' is-today':'')+'" data-i="'+i+'">' +
+        '<div><div class="dname">'+DAYS[i]+'</div><div class="ddate">'+fmtD(date)+'</div></div>' +
+        '<div class="chips">' +
+          '<button class="chip walk" data-act="walk" aria-pressed="'+!!d.walk+'">Caminata 5 km</button>' +
+          '<button class="chip gym" data-act="gym" aria-pressed="'+!!d.gym+'">Pesas</button>' +
+          '<button class="chip dessert" data-act="dessert" aria-pressed="'+!!d.dessert+'">Postre</button>' +
+          (b > 0 ? '<button class="chip ate" data-act="ate" aria-pressed="'+!!d.ate+'">Comí antes</button>' : '') +
+        '</div>' +
+        '<div class="beer" aria-label="Cervezas del '+DAYS[i]+'">' +
+          '<button data-act="minus" aria-label="Una cerveza menos">−</button>' +
+          '<span class="n'+(b>4?' over':b>0?' on':'')+'">'+b+'</span>' +
+          '<button data-act="plus" aria-label="Una cerveza más">+</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function renderMeasures(syncInputs){
+    const w = getWeek(curKey);
+    if(syncInputs){
+      [['weight','weight'],['waist','waist'],['note','note']].forEach(([id,f]) => {
+        if(document.activeElement !== $(id)) $(id).value = w[f] == null ? '' : w[f];
+      });
+    }
+    const delta = (field, el, unit) => {
+      const cur = w[field], prev = prevWith(curKey, field);
+      if(cur == null || cur === '' || prev == null){ el.textContent = ''; el.className = 'delta'; return; }
+      const dv = Math.round((Number(cur) - prev)*10)/10;
+      el.textContent = (dv > 0 ? '+' : '') + dv + ' ' + unit + ' vs. semana anterior';
+      el.className = 'delta ' + (dv < 0 ? 'down' : dv > 0 ? 'up' : '');
+    };
+    delta('weight', $('wDelta'), 'lb'); delta('waist', $('cDelta'), 'cm');
+    const latest = (() => { const ks = Object.keys(weeks).filter(k => k <= curKey && weeks[k].weight != null && weeks[k].weight !== '').sort(); return ks.length ? Number(weeks[ks[ks.length-1]].weight) : null; })();
+    const pct = latest == null ? 0 : Math.max(0, Math.min(100, (START_LB - latest) / (START_LB - GOAL_LB) * 100));
+    $('bar').style.width = pct + '%';
+    $('barMid').textContent = latest == null ? '' : 'Ahora ' + latest + ' lb (' + (Math.round((START_LB-latest)*10)/10) + ' lb menos)';
+  }
+
+  function renderTodo(){
+    $('todo').innerHTML = TODOS.map(t => {
+      const on = !!(settings.done && settings.done[t.id]);
+      return '<button data-todo="'+t.id+'" aria-pressed="'+on+'"><span class="box">'+(on?'✓':'')+'</span><span><span class="t">'+t.t+'</span><span class="h">'+t.h+'</span></span></button>';
+    }).join('');
+  }
+
+  function renderHist(){
+    const ks = Object.keys(weeks).filter(k => {
+      const w = weeks[k]; return (w.weight != null && w.weight !== '') || w.days.some(d => d.walk || d.beers || d.dessert || d.gym);
+    }).sort().reverse();
+    if(!ks.length){ $('hist').innerHTML = '<p class="empty">Aún no hay semanas registradas. Marca tus caminatas y cervezas arriba y aquí verás tu avance semana a semana.</p>'; return; }
+    $('hist').innerHTML = '<table><thead><tr><th>Semana</th><th>Peso</th><th>Cintura</th><th>Cervezas</th><th>Caminatas</th><th>Postres</th></tr></thead><tbody>' +
+      ks.map(k => {
+        const n = Math.max(1, weekNum(k)), w = weeks[k], s = stats(w, n);
+        return '<tr><td>S'+weekNum(k)+' · '+fmtD(parseKey(k))+'</td>' +
+          '<td>'+(w.weight!=null&&w.weight!==''?w.weight+' lb':'—')+'</td>' +
+          '<td>'+(w.waist!=null&&w.waist!==''?w.waist+' cm':'—')+'</td>' +
+          '<td class="'+(s.beers<=s.goal?'ok':'no')+'">'+s.beers+'/'+s.goal+'</td>' +
+          '<td class="'+(s.walks>=3?'ok':'')+'">'+s.walks+'/3</td>' +
+          '<td class="'+(s.desserts===0?'ok':'no')+'">'+s.desserts+'</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+  const _renderHist = renderHist;
+  renderHist = function(){ _renderHist(); renderStats(); renderForecast(); renderBackup(); };
+
+  /* ---------- statistics ---------- */
+  const hasData = w => (w.weight != null && w.weight !== '') || (w.waist != null && w.waist !== '') || w.days.some(d => d.walk || d.beers || d.dessert || d.gym);
+  function weekRange(){
+    const keys = Object.keys(weeks).filter(k => k >= START && hasData(weeks[k])).sort();
+    const last = [todayKey, keys[keys.length-1] || START].sort().pop();
+    const out = []; for(let d = parseKey(START); keyOf(d) <= last; d = addDays(d,7)) out.push(keyOf(d));
+    return out;
+  }
+  function niceTicks(lo, hi, n){
+    const raw = (hi - lo) / n, p = Math.pow(10, Math.floor(Math.log10(raw || 1)));
+    const step = [1,2,2.5,5,10].map(s => s*p).find(s => s >= raw) || p*10;
+    const a = Math.floor(lo/step)*step, b = Math.ceil(hi/step)*step, t = [];
+    for(let v = a; v <= b + 1e-9; v += step) t.push(Math.round(v*100)/100);
+    return t;
+  }
+  const W = 600, H = 210, M = {l:46, r:14, t:14, b:32};
+  function frame(ticks, labels){
+    const lo = ticks[0], hi = ticks[ticks.length-1], iw = W-M.l-M.r, ih = H-M.t-M.b;
+    const y = v => M.t + ih - (v-lo)/(hi-lo||1)*ih, colW = iw / labels.length, x = i => M.l + colW*(i+.5);
+    const every = Math.ceil(labels.length / 8);
+    let s = ticks.map(t => '<line class="grid" x1="'+M.l+'" x2="'+(W-M.r)+'" y1="'+y(t)+'" y2="'+y(t)+'"/><text class="ax" x="'+(M.l-8)+'" y="'+(y(t)+6)+'" text-anchor="end">'+t+'</text>').join('');
+    s += labels.map((l,i) => i % every === 0 ? '<text class="ax" x="'+x(i)+'" y="'+(H-6)+'" text-anchor="middle">'+l+'</text>' : '').join('');
+    return {s, y, x, colW, ih};
+  }
+  function wireTips(box, tips){
+    const tip = box.querySelector('.tip'), svg = box.querySelector('svg');
+    box.querySelectorAll('.hit').forEach(r => {
+      const show = () => {
+        const i = Number(r.dataset.i), bb = svg.getBoundingClientRect(), k = bb.width / W, br = box.getBoundingClientRect();
+        tip.textContent = tips[i]; tip.hidden = false;
+        tip.style.left = (bb.left - br.left + Number(r.dataset.cx)*k) + 'px';
+        tip.style.top = (bb.top - br.top + Number(r.dataset.cy)*k) + 'px';
+      };
+      r.addEventListener('pointerenter', show); r.addEventListener('click', show);
+      r.addEventListener('pointerleave', () => { tip.hidden = true; });
+    });
+  }
+  function emptyPlot(box, msg){ box.querySelector('.plot').innerHTML = '<p class="empty">'+msg+'</p>'; box.querySelector('.tip').hidden = true; }
+
+  function renderStats(){
+    const ks = weekRange();
+    const rows = ks.map(k => { const n = Math.max(1, weekNum(k)), w = getWeekRO(k); return {k, n, w, s: stats(w, n), rec: hasData(w)}; });
+    const rec = rows.filter(r => r.rec);
+    const weights = rows.filter(r => r.w.weight != null && r.w.weight !== '');
+    const lastW = weights.length ? Number(weights[weights.length-1].w.weight) : null;
+    const avgBeer = rec.length ? Math.round(rec.reduce((a,r) => a + r.s.beers, 0) / rec.length * 10) / 10 : null;
+    const walks = rec.reduce((a,r) => a + r.s.walks, 0);
+    const met = rec.filter(r => r.s.walks >= 3).length;
+    const cut = avgBeer == null ? null : Math.round((1 - (avgBeer*G_PER_BEER) / 390) * 100);
+    $('tiles').innerHTML =
+      '<div class="tile"><span class="v">'+(lastW == null ? '—' : (Math.round((START_LB-lastW)*10)/10)+' lb')+'</span><span class="k">perdidas desde 180 lb</span></div>' +
+      '<div class="tile"><span class="v">'+(avgBeer == null ? '—' : avgBeer)+'</span><span class="k">cervezas por semana (promedio)</span></div>' +
+      '<div class="tile"><span class="v">'+(cut == null ? '—' : cut+' %')+'</span><span class="k">menos alcohol que antes (~390 g/sem)</span></div>' +
+      '<div class="tile"><span class="v">'+walks+'</span><span class="k">caminatas · '+met+' de '+rec.length+' semanas con meta</span></div>';
+
+    const labels = rows.map(r => 'S'+r.n);
+    // weight line (with the 180 lb start point)
+    const cw = $('cWeight');
+    if(!weights.length) emptyPlot(cw, 'Anota tu peso en "Mediciones de la semana" y aquí verás la tendencia.');
+    else {
+      const pts = [{i:-1, v:START_LB, tip:'Inicio · 180 lb'}].concat(rows.map((r,i) => r.w.weight != null && r.w.weight !== '' ? {i, v:Number(r.w.weight), tip:'S'+r.n+' ('+fmtD(parseKey(r.k))+') · '+r.w.weight+' lb'} : null).filter(Boolean));
+      const lbls = ['Inicio'].concat(labels);
+      const vs = pts.map(p => p.v).concat([GOAL_LB]);
+      const f = frame(niceTicks(Math.min(...vs)-1, Math.max(...vs)+1, 4), lbls);
+      const P = pts.map(p => ({x:f.x(p.i+1), y:f.y(p.v), tip:p.tip}));
+      let s = f.s + '<line x1="'+M.l+'" x2="'+(W-M.r)+'" y1="'+f.y(GOAL_LB)+'" y2="'+f.y(GOAL_LB)+'" stroke="var(--good)" stroke-width="2" stroke-dasharray="6 6"/>' +
+        '<text class="ax" x="'+(W-M.r)+'" y="'+(f.y(GOAL_LB)-8)+'" text-anchor="end">meta 165</text>';
+      s += '<polyline fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" points="'+P.map(p => p.x+','+p.y).join(' ')+'"/>';
+      s += P.map((p,i) => '<circle cx="'+p.x+'" cy="'+p.y+'" r="'+(i===P.length-1?7:5)+'" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>').join('');
+      s += P.map((p,i) => '<rect class="hit" data-i="'+i+'" data-cx="'+p.x+'" data-cy="'+(p.y-8)+'" x="'+(p.x-Math.max(f.colW/2,14))+'" y="'+M.t+'" width="'+Math.max(f.colW,28)+'" height="'+f.ih+'"/>').join('');
+      cw.querySelector('.plot').innerHTML = '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Peso por semana">'+s+'</svg>';
+      wireTips(cw, P.map(p => p.tip));
+    }
+    // bar charts
+    const bars = (box, field, goalOf, color, unit) => {
+      if(!rec.length){ emptyPlot(box, 'Marca tu primera semana para ver esta gráfica.'); return; }
+      const vals = rows.map(r => r.s[field]);
+      const f = frame(niceTicks(0, Math.max(...vals, ...rows.map(goalOf)) * 1.1 || 4, 4), labels);
+      const bw = Math.min(36, f.colW * 0.62), base = f.y(0);
+      let s = f.s;
+      rows.forEach((r,i) => {
+        const v = vals[i], top = f.y(v), x0 = f.x(i) - bw/2, h = base - top, rr = Math.min(4, h);
+        if(v > 0) s += '<path fill="'+color+'" d="M'+x0+','+base+' V'+(top+rr)+' Q'+x0+','+top+' '+(x0+rr)+','+top+' H'+(x0+bw-rr)+' Q'+(x0+bw)+','+top+' '+(x0+bw)+','+(top+rr)+' V'+base+' Z"/>';
+        const g = goalOf(r); s += '<line x1="'+(f.x(i)-f.colW*0.45)+'" x2="'+(f.x(i)+f.colW*0.45)+'" y1="'+f.y(g)+'" y2="'+f.y(g)+'" stroke="var(--fg)" stroke-width="2" stroke-dasharray="4 3"/>';
+      });
+      s += '<line x1="'+M.l+'" x2="'+(W-M.r)+'" y1="'+base+'" y2="'+base+'" stroke="var(--muted)" stroke-width="1"/>';
+      s += rows.map((r,i) => '<rect class="hit" data-i="'+i+'" data-cx="'+f.x(i)+'" data-cy="'+(f.y(Math.max(vals[i], goalOf(r)))-6)+'" x="'+(f.x(i)-f.colW/2)+'" y="'+M.t+'" width="'+f.colW+'" height="'+f.ih+'"/>').join('');
+      box.querySelector('.plot').innerHTML = '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+box.querySelector('h3').textContent+'">'+s+'</svg>';
+      wireTips(box, rows.map((r,i) => 'S'+r.n+' ('+fmtD(parseKey(r.k))+') · '+vals[i]+' de '+goalOf(r)+' '+unit + (r.rec ? '' : ' · sin registro')));
+    };
+    bars($('cBeer'), 'beers', r => goalFor(r.n), 'var(--amber)', 'cervezas');
+    bars($('cWalk'), 'walks', () => 3, 'var(--accent)', 'caminatas');
+  }
+  const getWeekRO = k => weeks[k] || blankWeek();
+
+  /* ---------- forecast ---------- */
+  // Supuestos: antes ~20 artesanales/sem (~215 kcal c/u) y un postre diario (~300 kcal);
+  // 3 caminatas/sem ya eran parte de la rutina. 75 % del déficit se traduce en pérdida (el cuerpo compensa parte).
+  const BEFORE_BEER_DAY = 20*215/7, DESSERT_KCAL = 300, WALK_KCAL = 275, GYM_KCAL = 200, BASE_WALK_DAY = 3*WALK_KCAL/7, EFF = 0.75;
+  const dayDeficit = d => (d.dessert ? 0 : DESSERT_KCAL) + (BEFORE_BEER_DAY - (d.beers||0)*KCAL_PER_BEER) + (d.walk ? WALK_KCAL : 0) - BASE_WALK_DAY + (d.gym ? GYM_KCAL : 0);
+  function loggedDays(until){
+    const out = [];
+    for(let d = parseKey(START); d < until; d = addDays(d,1)){
+      const w = weeks[keyOf(mondayOf(d))];
+      if(w && hasData(w)) out.push({date:d, day:w.days[(d.getDay()+6)%7]});
+    }
+    return out;
+  }
+  function forecast(){
+    const now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if(today < parseKey(START)) return null;
+    const logged = loggedDays(today);
+    if(!logged.length) return {empty:true};
+    const avg = logged.reduce((a,x) => a + dayDeficit(x.day), 0) / logged.length;
+    const anchors = Object.keys(weeks).filter(k => parseKey(k) <= today && weeks[k].weight != null && weeks[k].weight !== '').sort();
+    const aKey = anchors.length ? anchors[anchors.length-1] : START;
+    const aDate = parseKey(aKey), aW = anchors.length ? Number(weeks[aKey].weight) : START_LB;
+    let sum = 0;
+    for(let d = new Date(aDate); d < today; d = addDays(d,1)){
+      const w = weeks[keyOf(mondayOf(d))];
+      sum += (w && hasData(w)) ? dayDeficit(w.days[(d.getDay()+6)%7]) : avg;
+    }
+    const days = Math.round((today - aDate)/864e5);
+    const water = !anchors.length ? Math.min(2, days * 0.4) : 0;   // agua de la primera semana
+    const est = aW - EFF*sum/3500 - water;
+    const recent = logged.slice(-14), rAvg = recent.reduce((a,x) => a + dayDeficit(x.day), 0) / recent.length;
+    const rate = EFF*rAvg*7/3500;
+    return {est, rate, eta: rate > 0.05 ? Math.ceil((est - GOAL_LB)/rate) : null, anchored: anchors.length > 0, aKey};
+  }
+  function renderForecast(){
+    const f = forecast();
+    if(!f){ $('fcW').textContent = '—'; $('fcR').textContent = 'El plan empieza el 2 nov'; $('fcRate').textContent = '—'; $('fcEta').textContent = ''; return; }
+    if(f.empty){ $('fcW').textContent = '—'; $('fcR').textContent = 'Marca tus días para calcularlo'; $('fcRate').textContent = '—'; $('fcEta').textContent = ''; return; }
+    const r1 = n => Math.round(n*10)/10;
+    $('fcW').textContent = r1(f.est) + ' lb';
+    $('fcR').textContent = 'rango ' + r1(f.est-1.5) + '–' + r1(f.est+1.5) + ' lb · ' + (f.anchored ? 'desde tu pesada del ' + fmtD(parseKey(f.aKey)) : 'desde 180 lb al inicio');
+    $('fcRate').textContent = (f.rate > 0 ? '−' : '+') + r1(Math.abs(f.rate)) + ' lb/sem';
+    $('fcEta').textContent = f.est <= GOAL_LB ? 'ya estás en la meta de 165 lb' : f.eta ? 'meta 165 lb en ~' + f.eta + ' semanas' : 'con este ritmo no hay avance hacia la meta';
+  }
+
+  /* ---------- CSV download ---------- */
+  function csv(){
+    const q = v => { const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
+    const out = [['fecha','semana','caminata','pesas','postre','cervezas','comi_antes','peso_lb','cintura_cm','notas'].join(',')];
+    Object.keys(weeks).filter(k => hasData(weeks[k]) || weeks[k].note).sort().forEach(k => {
+      const w = weeks[k], mon = parseKey(k);
+      w.days.forEach((d,i) => out.push([keyOf(addDays(mon,i)), weekNum(k), d.walk?1:0, d.gym?1:0, d.dessert?1:0, d.beers||0, d.ate?1:0,
+        i===0 ? w.weight : '', i===0 ? w.waist : '', i===0 ? w.note : ''].map(q).join(',')));
+    });
+    return out.join('\n');
+  }
+  const stamp = () => keyOf(new Date());
+  function fileOut(name, text, type){
+    const blob = new Blob([text], {type});
+    let file = null; try{ file = new File([blob], name, {type}); }catch(e){}
+    if(file && navigator.canShare && navigator.canShare({files:[file]})){
+      return navigator.share({files:[file], title:name}).then(() => true, e => { if(e && e.name === 'AbortError') return false; throw e; });
+    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    return Promise.resolve(true);
+  }
+  function renderBackup(){
+    const lb = settings.lastBackup;
+    $('bkInfo').textContent = lb ? 'Último respaldo: ' + fmtD(parseKey(lb)) + ' ' + parseKey(lb).getFullYear() : 'Aún no has hecho ningún respaldo.';
+    const anyData = Object.keys(weeks).some(k => hasData(weeks[k]));
+    const old = !lb || (new Date() - parseKey(lb)) > 14*864e5;
+    $('bkBanner').hidden = !(anyData && old);
+    $('bkBanner').textContent = lb ? 'Han pasado más de 2 semanas desde tu último respaldo. Ve a "Respaldo", al final de la página.' : 'Recuerda guardar un respaldo: ve a "Respaldo", al final de la página.';
+  }
+  $('bkSave').addEventListener('click', () => {
+    const data = JSON.stringify({app:'plan-higado', version:1, exported:new Date().toISOString(), weeks, settings});
+    fileOut('plan-higado-respaldo-' + stamp() + '.json', data, 'application/json').then(ok => {
+      if(!ok) return;
+      settings.lastBackup = stamp(); save(); renderBackup();
+      $('bkMsg').textContent = 'Respaldo listo. Guárdalo en Archivos o iCloud Drive.';
+    }).catch(() => { $('bkMsg').textContent = 'No se pudo crear el respaldo. Intenta de nuevo.'; });
+  });
+  $('bkCsv').addEventListener('click', () => {
+    fileOut('plan-higado-' + stamp() + '.csv', '\ufeff' + csv(), 'text/csv').then(ok => { if(ok) $('bkMsg').textContent = 'Archivo CSV listo. Ábrelo con Numbers o Excel.'; })
+      .catch(() => { $('bkMsg').textContent = 'No se pudo exportar. Intenta de nuevo.'; });
+  });
+  let pending = null;
+  $('bkFile').addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0]; e.target.value = ''; if(!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try{
+        const d = JSON.parse(r.result);
+        if(!d || d.app !== 'plan-higado' || typeof d.weeks !== 'object') throw 0;
+        pending = d;
+        const n = Object.keys(d.weeks).filter(k => d.weeks[k] && d.weeks[k].days).length;
+        $('bkConfirmText').textContent = 'Este respaldo tiene ' + n + ' semana(s)' + (d.exported ? ', guardado el ' + new Date(d.exported).toLocaleDateString('es') : '') + '. Va a reemplazar lo que hay ahora en este teléfono.';
+        $('bkConfirm').hidden = false; $('bkMsg').textContent = '';
+      }catch(err){ $('bkMsg').textContent = 'Ese archivo no es un respaldo de Plan Hígado. Elige el archivo .json que guardaste.'; }
+    };
+    r.onerror = () => { $('bkMsg').textContent = 'No se pudo leer el archivo.'; };
+    r.readAsText(f);
+  });
+  $('bkYes').addEventListener('click', () => {
+    if(!pending) return;
+    weeks = {}; Object.keys(pending.weeks).forEach(k => { weeks[k] = Object.assign(blankWeek(), pending.weeks[k]); });
+    settings = Object.assign({done:{}}, pending.settings || {});
+    pending = null; $('bkConfirm').hidden = true; save(); renderAll(true);
+    $('bkMsg').textContent = 'Datos restaurados.';
+  });
+  $('bkNo').addEventListener('click', () => { pending = null; $('bkConfirm').hidden = true; });
+
+  function renderAll(syncInputs){ renderHeader(); renderPills(); renderDays(); renderMeasures(syncInputs !== false); renderTodo(); renderHist(); }
+
+  /* ---------- events ---------- */
+  $('days').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-act]'); if(!btn) return;
+    const i = Number(btn.closest('.day').dataset.i), d = getWeek(curKey).days[i], act = btn.dataset.act;
+    if(act === 'plus') d.beers = Math.min(20, (d.beers||0) + 1);
+    else if(act === 'minus') { d.beers = Math.max(0, (d.beers||0) - 1); if(!d.beers) d.ate = false; }
+    else d[act] = !d[act];
+    save();
+    renderPills(); renderDays(); renderHist();
+    const again = document.querySelector('.day[data-i="'+i+'"] button[data-act="'+act+'"]'); if(again) again.focus();
+  });
+  ['weight','waist','note'].forEach(id => $(id).addEventListener('input', () => {
+    const w = getWeek(curKey), v = $(id).value;
+    w[id] = id === 'note' ? v : (v === '' ? null : Number(v));
+    save(); renderMeasures(false); renderHist();
+  }));
+  $('todo').addEventListener('click', e => {
+    const b = e.target.closest('button[data-todo]'); if(!b) return;
+    settings.done = settings.done || {}; settings.done[b.dataset.todo] = !settings.done[b.dataset.todo];
+    save(); renderTodo();
+  });
+  const go = k => { curKey = k; renderAll(true); };
+  $('prev').addEventListener('click', () => go(keyOf(addDays(parseKey(curKey), -7))));
+  $('next').addEventListener('click', () => go(keyOf(addDays(parseKey(curKey), 7))));
+  $('goToday').addEventListener('click', () => go(todayKey));
+
+  renderAll(true);
+  setStatus('Tus datos se guardan en este teléfono.');
+})();
+</script>
+</body>
+</html>
