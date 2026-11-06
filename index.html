@@ -218,6 +218,7 @@ td.ok{color:var(--good)}td.no{color:var(--bad)}
   <div class="target"><div><span class="label">Tu meta diaria</span><div class="small muted" id="oTargetSub">Completa tus datos</div></div><div class="v" id="oTarget">—</div></div>
   <p class="status small" id="oMsg" style="color:var(--bad)"></p>
   <button class="btn pri block" id="oGo">Empezar</button>
+  <label class="btn block" for="bkFile">Ya tengo un respaldo: restaurarlo</label>
   <p class="foot">Las calorías son estimaciones. Si tienes una condición médica, embarazo o un trastorno de la alimentación, consulta a un profesional antes de seguir una dieta.</p>
 </main>
 
@@ -605,10 +606,31 @@ td.ok{color:var(--good)}td.no{color:var(--bad)}
     if(s.custom.drinks.some(x => x.id === 'soberana')) s.lastDrink = 'soberana';
     return s;
   }
+  // first version of Plan Hígado stored weeks with checkboxes and a beer count
+  function v1toV2(o){
+    const out = {days:{}, settings:{profile:{h:166, age:25, start:180, goal:165, hab:1800}, drinks:[], foods:[]}};
+    Object.keys(o.weeks || {}).forEach(wk => {
+      const w = o.weeks[wk];
+      (w.days || []).forEach((d,i) => {
+        const day = {ex:[], drinks:[], foods:[], weight:null, waist:null, note:'', full:false};
+        if(d.walk) day.ex.push({t:'walk', km:5});
+        if(d.gym) day.ex.push({t:'gym', min:45, int:'media'});
+        if(d.beers) day.drinks.push({id:'soberana', n:'Soberana', ml:285, abv:3.47, kcal:75, q:d.beers});
+        if(d.dessert) day.foods.push({n:'Postre', p:'1 porción', kcal:300, cat:'p', q:1});
+        if(i === 0){ day.weight = w.weight != null && w.weight !== '' ? Number(w.weight) : null; day.waist = w.waist != null && w.waist !== '' ? Number(w.waist) : null; day.note = w.note || ''; }
+        if(day.ex.length || day.drinks.length || day.foods.length || day.weight != null || day.note) out.days[keyOf(addDays(parseKey(wk), i))] = day;
+      });
+    });
+    return out;
+  }
   function load(){
     try{ const raw = localStorage.getItem(KEY); if(raw){ S = normalize(JSON.parse(raw)); return; } }catch(e){}
     S = fresh();
-    try{ const ph = JSON.parse(localStorage.getItem('planHigado.v2') || 'null'); if(ph && ph.days){ S = normalize(fromPlanHigado(ph)); save(); } }catch(e){}
+    try{
+      let ph = JSON.parse(localStorage.getItem('planHigado.v2') || 'null');
+      if(!ph){ const v1 = JSON.parse(localStorage.getItem('planHigado.v1') || 'null'); if(v1 && v1.weeks) ph = v1toV2(v1); }
+      if(ph && ph.days && Object.keys(ph.days).length){ S = normalize(fromPlanHigado(ph)); save(); }
+    }catch(e){}
   }
   function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){ toast('No se pudo guardar. Revisa que Safari no esté en modo privado.'); } }
   function toast(t){ const b = $('bkBanner'); b.textContent = t; b.hidden = false; }
@@ -1210,8 +1232,10 @@ td.ok{color:var(--good)}td.no{color:var(--bad)}
         const d = JSON.parse(r.result);
         if(d && d.app === 'balance-diario') pending = normalize(d);
         else if(d && d.app === 'plan-higado' && d.version === 2) pending = normalize(fromPlanHigado(d));
+        else if(d && d.app === 'plan-higado' && d.weeks) pending = normalize(fromPlanHigado(v1toV2(d)));
         else throw 0;
         $('bkConfirmText').textContent = 'Este respaldo tiene ' + Object.keys(pending.days).length + ' día(s). Va a reemplazar lo que hay ahora en este teléfono.';
+        if(!S.profile){ S = pending; pending = null; save(); boot(); return; }
         $('bkConfirm').hidden = false; $('bkMsg').textContent = '';
       }catch(err){ $('bkMsg').textContent = 'Ese archivo no es un respaldo de Balance. Elige el .json que guardaste.'; }
     };
